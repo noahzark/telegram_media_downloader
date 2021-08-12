@@ -1,4 +1,5 @@
 """Downloads media from telegram."""
+import sys
 import os
 import logging
 from typing import List, Tuple, Optional
@@ -13,10 +14,14 @@ from utils.log import LogFilter
 from utils.meta import print_meta
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+error_handler = logging.StreamHandler(sys.stderr)
+error_handler.setLevel(logging.WARNING)
+
 logging.getLogger("pyrogram.session.session").addFilter(LogFilter())
 logging.getLogger("pyrogram.client").addFilter(LogFilter())
 logger = logging.getLogger("media_downloader")
+logger.addHandler(error_handler)
 
 CHAT_ID = ''
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
