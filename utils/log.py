@@ -10,6 +10,7 @@ class LogFilter(logging.Filter):
     """
     # pylint: disable = W0221
     def filter(self, log_record):
+        return True
         if log_record.funcName == "send" or log_record.funcName == "get_file":
             return False
         return True
