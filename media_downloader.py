@@ -18,6 +18,7 @@ logging.getLogger("pyrogram.session.session").addFilter(LogFilter())
 logging.getLogger("pyrogram.client").addFilter(LogFilter())
 logger = logging.getLogger("media_downloader")
 
+CHAT_ID = ''
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 FAILED_IDS: list = []
 
@@ -110,14 +111,21 @@ async def _get_media_meta(
         file_format = media_obj.mime_type.split("/")[-1]
         file_name: str = os.path.join(
             THIS_DIR,
+            CHAT_ID,
             _type,
             "voice_{}.{}".format(
                 dt.utcfromtimestamp(media_obj.date).isoformat(), file_format
             ),
         )
+    elif _type == 'photo' and getattr(media_obj, "file_name", None) is None:
+        file_name = os.path.join(
+            THIS_DIR, CHAT_ID, _type,
+            str(getattr(media_obj, "date", None)) or ""
+            )
+        file_name += (getattr(media_obj, "file_unique_id", None) or "") + ".jpg"
     else:
         file_name = os.path.join(
-            THIS_DIR, _type, getattr(media_obj, "file_name", None) or ""
+            THIS_DIR, CHAT_ID, _type, getattr(media_obj, "file_name", None) or ""
         )
     return file_name, file_format
 
@@ -169,18 +177,25 @@ async def download_media(
                     continue
                 file_name, file_format = await _get_media_meta(_media, _type)
                 if _can_download(_type, file_formats, file_format):
+                    logger.info("start downloading - %s", file_name)
                     if _is_exist(file_name):
                         file_name = get_next_name(file_name)
                         download_path = await client.download_media(
                             message, file_name=file_name
                         )
                         download_path = manage_duplicate_file(download_path)
+                    elif getattr(message, 'photo'):
+                        download_path = await client.download_media(
+                            message.photo, file_name=file_name
+                        )
                     else:
                         download_path = await client.download_media(
                             message, file_name=file_name
                         )
                     if download_path:
-                        logger.info("Media downloaded - %s", download_path)
+                        logger.info("<download_media> downloaded - %s", download_path)
+                    else:
+                        logger.warning("<download_media> failed - %s", file_name)
             break
         except pyrogram.errors.exceptions.bad_request_400.BadRequest:
             logger.warning(
@@ -339,6 +354,10 @@ def main():
     f = open(os.path.join(THIS_DIR, "config.yaml"))
     config = yaml.safe_load(f)
     f.close()
+    global CHAT_ID
+    CHAT_ID = str(config["chat_id"])
+    if not os.path.exists(CHAT_ID):
+        os.mkdir(CHAT_ID)
     updated_config = asyncio.get_event_loop().run_until_complete(
         begin_import(config, pagination_limit=100)
     )
