@@ -38,7 +38,7 @@ def update_config(config: dict):
         Configuraiton to be written into config file.
     """
     config["ids_to_retry"] = list(set(config["ids_to_retry"] + FAILED_IDS))
-    with open("config.yaml", "w") as yaml_file:
+    with open(config['filename'], "w") as yaml_file:
         yaml.dump(config, yaml_file, default_flow_style=False)
     logger.info("Updated last read message_id to config file")
 
@@ -356,13 +356,17 @@ async def begin_import(config: dict, pagination_limit: int) -> dict:
 
 def main():
     """Main function of the downloader."""
-    f = open(os.path.join(THIS_DIR, "config.yaml"))
+    config_filename = len(sys.argv) > 1 and sys.argv[1] or "config.yaml"
+    f = open(os.path.join(THIS_DIR, config_filename))
     config = yaml.safe_load(f)
     f.close()
+    config["filename"] = config_filename
+
     global CHAT_ID
     CHAT_ID = str(config["chat_id"])
     if not os.path.exists(CHAT_ID):
         os.mkdir(CHAT_ID)
+
     updated_config = asyncio.get_event_loop().run_until_complete(
         begin_import(config, pagination_limit=100)
     )
