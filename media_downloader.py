@@ -364,7 +364,7 @@ def main():
     config["filename"] = config_filename
 
     global CHAT_ID
-    CHAT_ID = str(config["chat_id"])
+    CHAT_ID = config_filename
     if not os.path.exists(CHAT_ID):
         os.mkdir(CHAT_ID)
 
