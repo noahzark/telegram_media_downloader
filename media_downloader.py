@@ -364,7 +364,7 @@ def main():
     config["filename"] = config_filename
 
     global CHAT_ID
-    CHAT_ID = config_filename
+    CHAT_ID = config_filename[:config_filename.find('.')]
     if not os.path.exists(CHAT_ID):
         os.mkdir(CHAT_ID)
 
