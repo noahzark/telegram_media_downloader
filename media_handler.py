@@ -62,21 +62,34 @@ async def download_media(
                 if _media is None:
                     continue
                 file_name, file_format = await _get_media_meta(_media, _type)
+                save_name = file_name + '.' + file_format
                 if _can_download(_type, file_formats, file_format):
                     logger.info("start downloading - %s", file_name)
-                    if _is_exist(file_name):
-                        file_name = get_next_name(file_name)
+                    if _is_exist(save_name):
+                        save_name = get_next_name(save_name)
                         download_path = await client.download_media(
-                            message, file_name=file_name
+                            message, file_name=save_name
                         )
                         download_path = manage_duplicate_file(download_path)
                     elif getattr(message, 'photo'):
+                        photo: pyrogram.types.Photo = getattr(message, 'photo')
                         download_path = await client.download_media(
-                            message.photo, file_name=file_name
+                            photo.file_id, file_name=save_name
                         )
+                    elif getattr(message, 'video'):
+                        thumb: pyrogram.types.Thumbnail
+                        for thumb in message.video.thumbs:
+                            download_path = await client.download_media(
+                                thumb, file_name=file_name + '.jpg'
+                            )
+                        """
+                        download_path = await client.download_media(
+                            message, file_name=save_name
+                        )
+                        """
                     else:
                         download_path = await client.download_media(
-                            message, file_name=file_name
+                            message, file_name=save_name
                         )
                     if download_path:
                         logger.info("<download_media> downloaded - %s", download_path)
