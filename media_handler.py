@@ -61,7 +61,7 @@ async def download_media(
                 _media = getattr(message, _type, None)
                 if _media is None:
                     continue
-                file_name, file_format = await _get_media_meta(_media, _type)
+                file_name, file_format = await _get_media_meta(str(message.message_id), _media, _type)
                 save_name = file_name + '.' + file_format
                 if _can_download(_type, file_formats, file_format):
                     logger.info("start downloading - %s", file_name)
@@ -82,11 +82,11 @@ async def download_media(
                             download_path = await client.download_media(
                                 thumb, file_name=file_name + '.jpg'
                             )
-                        """
+                        # """
                         download_path = await client.download_media(
                             message, file_name=save_name
                         )
-                        """
+                        # """
                     else:
                         download_path = await client.download_media(
                             message, file_name=save_name
@@ -139,13 +139,17 @@ async def download_media(
 
 
 async def _get_media_meta(
-        media_obj: pyrogram.types.messages_and_media, _type: str
+        msg_id: str,
+        media_obj: pyrogram.types.messages_and_media,
+        _type: str
 ) -> Tuple[str, Optional[str]]:
     """
     Extract file name and file id.
 
     Parameters
     ----------
+    msg_id : str
+        Media message id
     media_obj: pyrogram.types.messages_and_media
         Media object to be extracted.
     _type: str
@@ -156,7 +160,8 @@ async def _get_media_meta(
     tuple
         file_name, file_format
     """
-    logger.info("Found media mime type - %s", media_obj.mime_type)
+    if getattr(media_obj, "file_name", None):
+        logger.info("Found media mime type - %s", media_obj.mime_type)
     if _type in ["audio", "document", "video"]:
         file_format: Optional[str] = media_obj.mime_type.split("/")[-1]
     else:
@@ -164,27 +169,35 @@ async def _get_media_meta(
 
     if _type == "voice":
         # audios
-        file_format = media_obj.mime_type.split("/")[-1]
         file_name: str = os.path.join(
             StaticInfo.THIS_DIR,
             StaticInfo.CHAT_ID,
             _type,
-            "voice_{}.{}".format(
-                dt.utcfromtimestamp(media_obj.date).isoformat(), file_format
+            "{}_{}".format(
+                msg_id,
+                dt.utcfromtimestamp(media_obj.date).isoformat()
             ),
         )
     elif _type == 'photo' and getattr(media_obj, "file_name", None) is None:
-        # images
+        # images without file name
         file_name = os.path.join(
             StaticInfo.THIS_DIR, StaticInfo.CHAT_ID, _type,
-            str(getattr(media_obj, "date", None)) or ""
+            "{}_{}_{}".format(
+                msg_id,
+                str(getattr(media_obj, "date", None)) or "",
+                (getattr(media_obj, "file_unique_id", None) or "")
+            )
         )
-        file_name += (getattr(media_obj, "file_unique_id", None) or "") + ".jpg"
+        file_format = 'jpg'
     else:
-        # videos
+        # other documents
         file_name = os.path.join(
             StaticInfo.THIS_DIR, StaticInfo.CHAT_ID, _type,
-            str(media_obj.date) + '-' + (getattr(media_obj, "file_name", None) or media_obj.file_unique_id)
+            "{}_{}_{}".format(
+                msg_id,
+                str(media_obj.date),
+                (getattr(media_obj, "file_name", None) or media_obj.file_unique_id)
+            )
         )
     return file_name, file_format
 
