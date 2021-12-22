@@ -98,8 +98,7 @@ async def begin_import(config: dict, pagination_limit: int, debug=False) -> dict
     client = pyrogram.Client(
         "media_downloader",
         api_id=config["api_id"],
-        api_hash=config["api_hash"],
-        workers=4
+        api_hash=config["api_hash"]
     )
     pyrogram.session.Session.notice_displayed = True
     await client.start()
