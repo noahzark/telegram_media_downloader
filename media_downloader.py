@@ -116,8 +116,9 @@ async def begin_import(config: dict, pagination_limit: int, debug=False) -> dict
     # read messages in batches
     message: pyrogram.types.Message
     async for message in messages_iter:
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(message)
+        if debug:
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(message)
         if pagination_count != pagination_limit:
             # append message to list
             pagination_count += 1
@@ -163,7 +164,7 @@ def main():
         os.mkdir(StaticInfo.CHAT_ID)
 
     updated_config = asyncio.get_event_loop().run_until_complete(
-        begin_import(config, pagination_limit=1, debug=True)
+        begin_import(config, pagination_limit=100, debug=False)
     )
     if StaticInfo.FAILED_IDS:
         logger.info(
