@@ -62,7 +62,10 @@ async def download_media(
                 if _media is None:
                     continue
                 file_name, file_format = await _get_media_meta(str(message.message_id), _media, _type)
-                save_name = file_name + '.' + file_format
+                if file_format in file_name:
+                    save_name = file_name
+                else:
+                    save_name = file_name + '.' + file_format
                 if _can_download(_type, file_formats, file_format):
                     logger.info("start downloading - %s", file_name)
                     if _is_exist(save_name):
