@@ -133,9 +133,9 @@ async def begin_import(config: dict, pagination_limit: int, debug=False) -> dict
             pagination_count = 0
             messages_list = [message]
             config["last_read_message_id"] = last_read_message_id
-            # update_config(config)
             if debug:
                 break
+            update_config(config)
 
     if len(messages_list):
         last_read_message_id = await process_messages(
