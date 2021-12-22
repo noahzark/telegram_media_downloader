@@ -163,7 +163,7 @@ def main():
         os.mkdir(StaticInfo.CHAT_ID)
 
     updated_config = asyncio.get_event_loop().run_until_complete(
-        begin_import(config, pagination_limit=100, debug=False)
+        begin_import(config, pagination_limit=min(32, os.cpu_count() + 2), debug=True)
     )
     if StaticInfo.FAILED_IDS:
         logger.info(
